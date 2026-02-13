@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Star, Flame, Zap, Search, X, Filter } from 'lucide-react';
+import { Search, ShoppingBag, Star, Flame, Clock, Truck, ShieldCheck, Menu as MenuIcon, X, ChevronRight } from 'lucide-react';
 import { Logo } from '@/components/logo';
-import { useStore } from '@/store/store';
-import { formatCurrency } from '@/lib/helpers';
 
 interface Product {
   id: string;
@@ -23,302 +22,260 @@ interface Product {
 }
 
 export default function HomePage() {
-  const { addToCart } = useStore();
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Computed displayed products based on search and category
-  const displayedProducts = useMemo(() => {
-    if (isSearching) {
-      return allProducts.filter((product) => {
-        const matchesSearch =
-          product.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.deskripsi.toLowerCase().includes(searchQuery.toLowerCase());
+  const categories = [
+    { id: 'all', name: 'Semua', icon: '🍽️' },
+    { id: 'makanan', name: 'Makanan', icon: '🍗' },
+    { id: 'minuman', name: 'Minuman', icon: '🥤' },
+    { id: 'promo', name: 'Promo', icon: '🔥' },
+    { id: 'diskon', name: 'Diskon', icon: '💰' },
+    { id: 'terbaru', name: 'Terbaru', icon: '✨' },
+  ];
 
-        const matchesCategory =
-          selectedCategory === 'all' || product.kategori.toLowerCase() === selectedCategory.toLowerCase();
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.deskripsi.toLowerCase().includes(searchQuery.toLowerCase());
 
-        return matchesSearch && matchesCategory;
-      });
-    }
-    return featuredProducts;
-  }, [isSearching, searchQuery, selectedCategory, allProducts, featuredProducts]);
+    const matchesCategory =
+      selectedCategory === 'all' || product.kategori.toLowerCase() === selectedCategory.toLowerCase();
+
+    return matchesSearch && matchesCategory;
+  });
 
   useEffect(() => {
-    // Fetch products from API
     fetch('/api/products')
       .then((res) => res.json())
       .then((data) => {
         if (data.data && Array.isArray(data.data)) {
-          setAllProducts(data.data);
-          setFeaturedProducts(data.data.slice(0, 4));
+          setProducts(data.data);
         }
       })
       .catch((error) => {
         console.error('Error fetching products:', error);
-        setAllProducts([]);
-        setFeaturedProducts([]);
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, []);
 
-  const categories = [
-    { id: 'all', name: 'Semua', icon: '🍽️', count: 0 },
-    { id: 'makanan', name: 'Makanan', icon: '🍗', count: 12 },
-    { id: 'minuman', name: 'Minuman', icon: '🥤', count: 8 },
-    { id: 'promo', name: 'Promo', icon: '🔥', count: 5 },
-    { id: 'diskon', name: 'Diskon', icon: '💰', count: 7 },
-    { id: 'terbaru', name: 'Terbaru', icon: '✨', count: 3 },
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const features = [
+    { icon: <Clock className="h-6 w-6" />, title: 'Pengiriman Cepat', description: 'Pesanan sampai dalam 30 menit' },
+    { icon: <Truck className="h-6 w-6" />, title: 'Gratis Ongkir', description: 'Minimal belanja Rp 50.000' },
+    { icon: <ShieldCheck className="h-6 w-6" />, title: 'Jaminan Kualitas', description: 'Bahan segar dan higienis' },
+    { icon: <Flame className="h-6 w-6" />, title: 'Rasa Otentik', description: 'Sambal ijo khas Aceh' },
   ];
 
-  const handleAddToCart = (product: any) => {
-    addToCart({
-      produkId: product.id,
-      nama: product.nama,
-      harga: product.harga,
-      gambar: product.gambar,
-      jumlah: 1,
-    });
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setIsSearching(true);
-    }
-  };
-
-  const clearSearch = () => {
-    setSearchQuery('');
-    setIsSearching(false);
-    setSelectedCategory('all');
-  };
-
-  const handleCategoryClick = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    if (!isSearching && categoryId !== 'all') {
-      setIsSearching(true);
-      setSearchQuery('');
-    }
-  };
-
   return (
-    <>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background Gradient */}
-        <div className="absolute inset-0 gradient-brand opacity-90" />
-        <div className="absolute inset-0 bg-black/10" />
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <Logo />
+            </Link>
 
-        {/* Decorative Elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-white/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-yellow-400/20 rounded-full blur-3xl" />
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-8">
+              <Link href="#menu" className="text-gray-700 hover:text-orange-600 transition-colors font-medium">
+                Menu
+              </Link>
+              <Link href="#promo" className="text-gray-700 hover:text-orange-600 transition-colors font-medium">
+                Promo
+              </Link>
+              <Link href="#tentang" className="text-gray-700 hover:text-orange-600 transition-colors font-medium">
+                Tentang
+              </Link>
+            </nav>
 
-        <div className="container mx-auto px-4 py-16 md:py-24 relative">
-          <div className="max-w-5xl mx-auto text-center">
-            {/* Hero Content */}
-            <div>
-              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                <Flame className="h-4 w-4 text-yellow-200" />
-                <span className="text-white text-sm font-medium">
-                  Promo Spesial Hari Ini!
-                </span>
+            <div className="flex items-center gap-4">
+              <Link href="/login">
+                <Button variant="ghost" className="hidden md:block">
+                  Masuk
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button className="bg-orange-600 hover:bg-orange-700 text-white">
+                  Daftar
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <motion.nav
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="md:hidden mt-4 pb-4 border-t pt-4"
+            >
+              <div className="flex flex-col gap-4">
+                <Link href="#menu" className="text-gray-700 hover:text-orange-600 transition-colors font-medium">
+                  Menu
+                </Link>
+                <Link href="#promo" className="text-gray-700 hover:text-orange-600 transition-colors font-medium">
+                  Promo
+                </Link>
+                <Link href="#tentang" className="text-gray-700 hover:text-orange-600 transition-colors font-medium">
+                  Tentang
+                </Link>
+                <Link href="/login">
+                  <Button variant="ghost" className="w-full justify-start">
+                    Masuk
+                  </Button>
+                </Link>
               </div>
+            </motion.nav>
+          )}
+        </div>
+      </header>
 
-              <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden py-20 md:py-32">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-red-500 to-orange-600" />
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-400/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-300/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <Badge className="mb-6 bg-white/20 text-white border-white/30 backdrop-blur-sm px-4 py-2">
+                <Flame className="h-4 w-4 mr-2" />
+                Promo Spesial Hari Ini!
+              </Badge>
+              <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
                 AYAM GEPREK
                 <br />
                 <span className="text-yellow-300">SAMBAL IJO</span>
               </h1>
-
-              <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl mx-auto">
+              <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
                 Pedasnya bikin nagih! 🔥 Nikmati ayam geprek dengan sambal ijo yang
                 menggugah selera. Kualitas terbaik, harga terjangkau!
               </p>
-
-              {/* Search Bar */}
-              <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Cari menu favorit Anda..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 pr-24 h-14 text-lg shadow-xl bg-white/95 backdrop-blur-sm"
-                  />
-                  {searchQuery && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearSearch}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 hover:bg-gray-100"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  )}
-                </div>
-              </form>
-
-              <div className="flex flex-wrap gap-4 justify-center">
-                <Button
-                  size="lg"
-                  className="bg-white text-orange-600 hover:bg-yellow-100 button-hover shadow-lg text-lg px-8"
-                  onClick={() => {}}
-                >
-                  Pesan Sekarang
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="bg-transparent border-2 border-white text-white hover:bg-white/10 button-hover text-lg px-8"
-                  onClick={() => {
-                    const menuSection = document.getElementById('menu');
-                    menuSection?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  Lihat Menu
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="#menu">
+                  <Button size="lg" className="bg-white text-orange-600 hover:bg-yellow-100 text-lg px-8">
+                    Pesan Sekarang
+                  </Button>
+                </Link>
+                <Link href="#tentang">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-lg px-8"
+                  >
+                    Tentang Kami
+                  </Button>
+                </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Promo Banner */}
-      <section className="py-12 bg-gradient-to-r from-red-600 to-orange-600">
+      {/* Features Section */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-              <div className="flex items-center gap-3">
-                <Zap className="h-8 w-8 text-yellow-300" />
-                <h2 className="text-2xl md:text-3xl font-bold text-white">
-                  PROMO SPESIAL!
-                </h2>
-              </div>
-              <p className="text-white/90 text-lg">
-                Diskon hingga <span className="font-bold text-yellow-300">20%</span> untuk semua menu
-              </p>
-              <Button
-                size="lg"
-                className="bg-white text-red-600 hover:bg-yellow-100 button-hover"
-                onClick={() => {}}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="text-center"
               >
-                Pesan Sekarang
-              </Button>
-            </div>
-          </motion.div>
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
+                  <div className="text-orange-600">{feature.icon}</div>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section id="menu" className="py-16 md:py-24">
+      {/* Menu Section */}
+      <section id="menu" className="py-16 md:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-brand">
-              Kategori Menu
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <h2 className="text-4xl font-bold mb-4 text-gray-900">Menu Kami</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
               Temukan berbagai menu lezat yang siap menggugah selera Anda
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-            {categories.map((category, index) => (
-              <motion.div
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Cari menu favorit Anda..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 text-lg border-2 focus:border-orange-500"
+              />
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div className="flex flex-wrap gap-3 justify-center mb-12">
+            {categories.map((category) => (
+              <Button
                 key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
+                variant={selectedCategory === category.id ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory(category.id)}
+                className={
+                  selectedCategory === category.id
+                    ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                    : 'hover:border-orange-500 hover:text-orange-600'
+                }
               >
-                <Card
-                  className={`cursor-pointer card-hover text-center p-6 border-2 transition-all ${
-                    selectedCategory === category.id
-                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                      : 'hover:border-orange-400'
-                  }`}
-                  onClick={() => handleCategoryClick(category.id)}
-                >
-                  <CardContent className="p-0">
-                    <div className="text-4xl mb-3">{category.icon}</div>
-                    <h3 className="font-semibold mb-1 text-sm md:text-base">{category.name}</h3>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                <span className="mr-2">{category.icon}</span>
+                {category.name}
+              </Button>
             ))}
           </div>
 
-          {/* Search/Filter Info */}
-          {(isSearching || selectedCategory !== 'all') && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 text-center"
-            >
-              <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-full">
-                <Filter className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-blue-700 dark:text-blue-300">
-                  {isSearching && searchQuery && `Hasil pencarian: "${searchQuery}"`}
-                  {isSearching && searchQuery && selectedCategory !== 'all' && ' • '}
-                  {selectedCategory !== 'all' && `Kategori: ${categories.find(c => c.id === selectedCategory)?.name}`}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSearch}
-                  className="h-6 px-2 text-blue-600 hover:bg-blue-100"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </section>
-
-      {/* Products Section */}
-      <section className="py-16 md:py-24 bg-gray-50 dark:bg-gray-900/50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-brand">
-              {isSearching ? 'Hasil Pencarian' : 'Menu Unggulan'}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              {isSearching
-                ? `Menampilkan ${displayedProducts.length} produk`
-                : 'Menu paling favorit dan banyak dipesan oleh pelanggan kami'}
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isLoading ? (
-              [1, 2, 3, 4, 5, 6, 7, 8].map((_, index) => (
+          {/* Products Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((_, index) => (
                 <div key={index} className="animate-pulse">
                   <Card className="h-full">
                     <CardContent className="p-0">
@@ -334,22 +291,27 @@ export default function HomePage() {
                     </CardContent>
                   </Card>
                 </div>
-              ))
-            ) : displayedProducts.length > 0 ? (
-              displayedProducts.map((product, index) => (
+              ))}
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product, index) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="card-hover overflow-hidden border-2 hover:border-orange-400 h-full">
+                  <Card className="h-full hover:shadow-xl transition-shadow overflow-hidden">
                     <CardContent className="p-0">
-                      {/* Product Image */}
                       <div className="relative h-48 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
                         {product.gambar ? (
-                          <img src={product.gambar} alt={product.nama} className="w-full h-full object-cover" />
+                          <img
+                            src={product.gambar}
+                            alt={product.nama}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <span className="text-8xl">🍗</span>
                         )}
@@ -362,21 +324,15 @@ export default function HomePage() {
                           variant="ghost"
                           size="icon"
                           className="absolute top-3 right-3 bg-white/90 hover:bg-white"
-                          onClick={() => {}}
                         >
                           <Star className="h-4 w-4" />
                         </Button>
                       </div>
-
-                      {/* Product Info */}
                       <div className="p-4 space-y-3">
                         <div>
                           <h3 className="font-semibold text-lg mb-1">{product.nama}</h3>
-                          <p className="text-sm text-gray-500 line-clamp-2">
-                            {product.deskripsi}
-                          </p>
+                          <p className="text-sm text-gray-500 line-clamp-2">{product.deskripsi}</p>
                         </div>
-
                         <div className="flex items-center justify-between">
                           <div>
                             {product.promo && product.diskon > 0 && (
@@ -385,172 +341,203 @@ export default function HomePage() {
                               </p>
                             )}
                             <p className="text-xl font-bold text-orange-600">
-                              {formatCurrency(
-                                product.harga * (1 - (product.diskon || 0) / 100)
-                              )}
+                              {formatCurrency(product.harga * (1 - (product.diskon || 0) / 100))}
                             </p>
                           </div>
-                          <Button
-                            size="sm"
-                            className="gradient-brand text-white button-hover"
-                            onClick={() => handleAddToCart(product)}
-                          >
-                            +
+                          <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
+                            <ShoppingBag className="h-4 w-4 mr-2" />
+                            Beli
                           </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))
-            ) : (
-              <div className="col-span-4 text-center py-12">
-                <div className="flex flex-col items-center gap-4">
-                  <Search className="h-16 w-16 text-gray-400" />
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {isSearching ? 'Tidak Ada Hasil' : 'Belum Ada Produk'}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {isSearching
-                      ? `Tidak ada produk yang cocok dengan pencarian "${searchQuery}"`
-                      : 'Belum ada produk tersedia'}
-                  </p>
-                  {isSearching && (
-                    <Button
-                      variant="outline"
-                      onClick={clearSearch}
-                      className="mt-4"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Hapus Pencarian
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {!isSearching && displayedProducts.length > 0 && (
-            <div className="text-center mt-8">
-              <Button
-                size="lg"
-                variant="outline"
-                className="gradient-brand text-white border-none button-hover px-8"
-                onClick={() => {
-                  setIsSearching(true);
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                }}
-              >
-                Lihat Semua Menu
-              </Button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-gray-500 text-lg">Tidak ada menu yang ditemukan</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 md:py-24">
+      {/* Promo Section */}
+      <section id="promo" className="py-16 md:py-24 bg-gradient-to-r from-red-600 to-orange-600">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gradient-brand">
-              Kenapa Pilih Kami?
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.1, duration: 0.5 }}
             >
-              <Card className="card-hover text-center p-8">
-                <CardContent className="p-0">
-                  <div className="w-16 h-16 gradient-brand rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
-                    ⚡
-                  </div>
-                  <h3 className="font-semibold text-xl mb-2">Pesan Cepat</h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Proses pemesanan yang cepat dan mudah langsung dari WhatsApp
-                  </p>
-                </CardContent>
-              </Card>
+              <h2 className="text-4xl font-bold text-white mb-4">PROMO SPESIAL!</h2>
+              <p className="text-white/90 text-xl mb-8">
+                Diskon hingga <span className="font-bold text-yellow-300">20%</span> untuk semua menu
+                hari ini
+              </p>
+              <Link href="#menu">
+                <Button size="lg" className="bg-white text-red-600 hover:bg-yellow-100 text-lg px-8">
+                  Pesan Sekarang
+                </Button>
+              </Link>
             </motion.div>
+          </div>
+        </div>
+      </section>
 
+      {/* About Section */}
+      <section id="tentang" className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.5 }}
             >
-              <Card className="card-hover text-center p-8">
-                <CardContent className="p-0">
-                  <div className="w-16 h-16 gradient-brand rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
-                    💎
-                  </div>
-                  <h3 className="font-semibold text-xl mb-2">Kualitas Terbaik</h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Bahan-bahan segar dengan resep rahasia yang nikmat
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-            >
-              <Card className="card-hover text-center p-8">
-                <CardContent className="p-0">
-                  <div className="w-16 h-16 gradient-brand rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
-                    🎁
-                  </div>
-                  <h3 className="font-semibold text-xl mb-2">Point Reward</h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Kumpulkan poin dari setiap pembelian dan tukarkan dengan hadiah
-                  </p>
-                </CardContent>
-              </Card>
+              <h2 className="text-4xl font-bold mb-4 text-gray-900">Tentang Kami</h2>
+              <p className="text-gray-600 text-lg leading-relaxed mb-8">
+                Ayam Geprek Sambal Ijo hadir dengan resep khas Aceh yang melegenda. Sambal ijo
+                kami dibuat dari cabai hijau segar pilihan yang dihaluskan dengan bumbu rahasia,
+                menghasilkan rasa pedas yang nikmat dan tidak bikin sakit perut. Setiap ayam
+                digoreng hingga krispi dan gurih, disajikan dengan nasi hangat dan lalapan
+                segar.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-orange-600 mb-2">1000+</div>
+                  <div className="text-gray-600">Pelanggan Puas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-orange-600 mb-2">50+</div>
+                  <div className="text-gray-600">Menu Variasi</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-orange-600 mb-2">5+</div>
+                  <div className="text-gray-600">Tahun Pengalaman</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-orange-600 mb-2">4.9</div>
+                  <div className="text-gray-600">Rating Bintang</div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 gradient-brand">
+      <section className="py-16 bg-gray-900">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Siap Mencoba?
-            </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Pesan sekarang dan nikmati ayam geprek sambal ijo terbaik!
-            </p>
-            <Button
-              size="lg"
-              className="bg-white text-orange-600 hover:bg-yellow-100 shadow-lg text-xl px-12 py-6"
-              onClick={() => {}}
+          <div className="max-w-3xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
             >
-              Pesan Sekarang
-            </Button>
-          </motion.div>
+              <h2 className="text-4xl font-bold text-white mb-4">
+                Siap Mencoba Pedasnya?
+              </h2>
+              <p className="text-gray-400 text-lg mb-8">
+                Pesan sekarang dan nikmati ayam geprek sambal ijo terbaik di kota!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/register">
+                  <Button size="lg" className="bg-orange-600 hover:bg-orange-700 text-white text-lg px-8">
+                    Daftar Sekarang
+                  </Button>
+                </Link>
+                <Link href="#menu">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white/10 text-lg px-8"
+                  >
+                    Lihat Menu
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
-    </>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 border-t border-gray-800 py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Logo />
+              </div>
+              <p className="text-gray-400 text-sm">
+                Ayam Geprek Sambal Ijo - Pedasnya bikin nagih!
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Menu</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="#menu" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Makanan
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#menu" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Minuman
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#menu" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Promo
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Bantuan</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="#" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    FAQ
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Kontak
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Pengiriman
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Akun</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/login" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Masuk
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/register" className="text-gray-400 hover:text-orange-500 text-sm transition-colors">
+                    Daftar
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              © 2025 Ayam Geprek Sambal Ijo. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
