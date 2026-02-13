@@ -1,0 +1,86 @@
+══════════════════════════════════════════════════════════════════════════════
+          VERCEL ENVIRONMENT VARIABLES - COPY & PASTE
+          Project: ayamgeprek2
+══════════════════════════════════════════════════════════════════════════════
+
+📦 VARIABLE 1: DATABASE_URL
+────────────────────────────────────────────────────────────────────────────
+
+Name: DATABASE_URL
+Environments: ☑ Production  ☑ Preview  ☑ Development
+Type: Plain
+
+Value (copy semua baris di bawah ini):
+postgresql://postgres.eteuxazhlfpxavxwcztg:aYAGEPREKKU@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
+
+────────────────────────────────────────────────────────────────────────────
+
+📦 VARIABLE 2: NEXTAUTH_SECRET
+────────────────────────────────────────────────────────────────────────────
+
+Name: NEXTAUTH_SECRET
+Environments: ☑ Production  ☑ Preview  ☑ Development
+Type: Encrypted
+
+Value (copy baris di bawah ini):
+j+GaOQzGbkcxbnoQEkCTVrHxP/YcD54cqNnC6h+5InY=
+
+────────────────────────────────────────────────────────────────────────────
+
+📦 VARIABLE 3: NEXTAUTH_URL
+────────────────────────────────────────────────────────────────────────────
+
+Name: NEXTAUTH_URL
+Environments: ☑ Production only
+Type: Plain
+
+Value (ganti dengan URL deployment Anda):
+https://ayamgeprek2.vercel.app
+
+Catatan: Setelah deploy pertama, copy URL dari Vercel Dashboard dan update NEXTAUTH_URL
+
+────────────────────────────────────────────────────────────────────────────
+
+⚠️  DELETE THESE OLD VARIABLES FIRST:
+────────────────────────────────────────────────────────────────────────────
+
+Jika ada variables ini, HAPUS dulu sebelum menambah yang baru:
+❌ POSTGRES_PRISMA_URL
+❌ POSTGRES_URL
+❌ POSTGRES_URL_NON_POOLING
+❌ PRISMA_ACCELERATE_URL
+❌ Variable lain yang mereferensikan Secrets
+
+────────────────────────────────────────────────────────────────────────────
+
+🚀 SETUP STEPS:
+────────────────────────────────────────────────────────────────────────────
+
+1. Buka Vercel Dashboard: https://vercel.com/new
+2. Import repository: safir2310/ayamgeprek2
+3. Configure project:
+   - Name: ayamgeprek2
+   - Framework: Next.js
+   - Build Command: prisma generate && next build
+   - Click: Deploy
+4. Buka: Settings → Environment Variables
+5. Hapus variables lama (POSTGRES_*, PRISMA_*)
+6. Add 3 variables baru (lihat di atas)
+7. Redeploy
+8. Test aplikasi
+
+══════════════════════════════════════════════════════════════════════════════
+
+📊 DATABASE DETAILS:
+────────────────────────────────────────────────────────────────────────────
+
+Supabase Project: ayamgeprekku
+Project REF: eteuxazhlfpxavxwcztg
+Region: Singapore (ap-southeast-1)
+Database: PostgreSQL
+Connection: Pooling enabled (pgbouncer)
+
+Supabase Dashboard:
+https://supabase.com/dashboard/project/eteuxazhlfpxavxwcztg
+
+══════════════════════════════════════════════════════════════════════════════
