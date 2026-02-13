@@ -1,0 +1,13 @@
+{
+  "buildCommand": "bun run build",
+  "devCommand": "bun run dev",
+  "installCommand": "bun install",
+  "outputDirectory": ".next/standalone",
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "env": {
+    "POSTGRES_PRISMA_URL": "@postgres-prisma-url",
+    "POSTGRES_URL_NON_POOLING": "@postgres-url-non-pooling",
+    "POSTGRES_URL": "@postgres-url"
+  }
+}
